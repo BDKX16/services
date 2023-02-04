@@ -1,0 +1,12 @@
+version: "3.8"
+services:
+
+  emqx:
+    container_name: emqx
+    image: emqx/emqx:5.0.16
+    restart: always
+    ports:
+      - ${emqxDashPort}:18083
+      - 8083:8083
+    enviroment:
+      EMQX_LISTENER__TCP__EXTERNAL__MAX_CONNECTIONS: 1000
