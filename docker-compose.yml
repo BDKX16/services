@@ -9,4 +9,4 @@ services:
       - ${emqxDashPort}:18083
       - 8083:8083
     enviroment:
-      EMQX_LISTENER__TCP__EXTERNAL__MAX_CONNECTIONS: 1000
+      EMQX_LISTENER__TCP__EXTERNAL__MAX_CONNECTIONS: 100
