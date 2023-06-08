@@ -1,12 +1,12 @@
 version: "3.8"
 
 volumes:
-  vol-emqx-data:            ##DATOS DE LOGUEO Y REGLAS
-    name: foo-emqx-data
+#  vol-emqx-data:            ##DATOS DE LOGUEO Y REGLAS
+#    name: foo-emqx-data
 #  vol-emqx-etc:             ##CONFIGURACION DE EMQX -
 #    name: foo-emqx-etc
-  vol-emqx-log:             ##ARCHIVOS DE LOG
-    name: foo-emqx-log
+#  vol-emqx-log:             ##ARCHIVOS DE LOG
+#    name: foo-emqx-log
 
 
 services:
@@ -45,7 +45,7 @@ services:
   
   emqx:
     container_name: emqx
-    image: emqx/emqx:4.4.14
+    image: emqx/emqx:4.1
     restart: always
     ports:
       - 18083:18083      ##puerto por donde entro al dashboard emqx
@@ -55,15 +55,15 @@ services:
       - 8085:8081     
 
     volumes:
-     - vol-emqx-data:/opt/emqx/data
+    # - vol-emqx-data:/opt/emqx/data
     #  - vol-emqx-etc:/opt/emqx/etc
-     - vol-emqx-log:/opt/emqx/log
+    # - vol-emqx-log:/opt/emqx/log
 
     links:
       - mongo
 
     extra_hosts:
-     - "localhost:172.21.112.1"
+     - "localhost:172.17.144.1"
 
     environment:
       EMQX_NAME: confiplant-gl
@@ -76,7 +76,7 @@ services:
       #DEFAULT APP SECRET
       EMQX_MANAGEMENT__DEFAULT_APPLICATION__SECRET: "${EMQX_DEFAULT_APPLICATION_SECRET}"
       
-      EMQX_ALLOW_ANONYMOUS: "false"
+      EMQX_ALLOW_ANONYMOUS: "true"
       EMQX_NOMATCH: "deny"
 
       #MONGO CONNECTION
@@ -99,6 +99,9 @@ services:
       EMQX_AUTH__MONGO__AUTH_QUERY__SELECTOR: "username=%u"
 
       EMQX_AUTH__MONGO__SUPER_QUERY: "off"
+      EMQX_AUTH__MONGO__SUPER_QUERY__COLLECTION: "emqxauthrules"
+      EMQX_AUTH__MONGO__SUPER_QUERY__SUPER_FIELD: "password"
+      EMQX_AUTH__MONGO__SUPER_QUERY__SELECTOR: "username=%u"
 
       ##Enable ACL query
       EMQX_AUTH__MONGO__ACL_QUERY: "on"

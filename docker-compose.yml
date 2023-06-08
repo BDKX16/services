@@ -1,18 +1,19 @@
 version: "3.8"
 
-volumes:
-  vol-emqx-data:            ##DATOS DE LOGUEO Y REGLAS
-    name: foo-emqx-data
+#volumes:
+#  vol-emqx-data:            ##DATOS DE LOGUEO Y REGLAS
+#    name: foo-emqx-data
 #  vol-emqx-etc:             ##CONFIGURACION DE EMQX -
 #    name: foo-emqx-etc
-  vol-emqx-log:             ##ARCHIVOS DE LOG
-    name: foo-emqx-log
+#  vol-emqx-log:             ##ARCHIVOS DE LOG
+#    name: foo-emqx-log
 
 
 services:
 
-  mongodb:
-    image: mongo:6.0
+  mongo:
+    container_name: mongo
+    image: mongo:5.0.18
     restart: always
     environment:
       TZ: "${TZ}"
@@ -22,10 +23,12 @@ services:
       - ./mongodata:/data/db
     ports:
       - '${MONGO_EXT_PORT}:27017'
+    
   
   
   emqx:
-    image: emqx/emqx:4.4.14
+    container_name: emqx
+    image: emqx/emqx:4.4.18
     ports:
       - '18083:18083'      ##puerto por donde entro al dashboard emqx
       - '1883:1883'
@@ -33,19 +36,16 @@ services:
       - '8083:8083'        
       - '8085:8081'     
 
-    volumes:
-     - vol-emqx-data:/opt/emqx/data
-    #  - vol-emqx-etc:/opt/emqx/etc
-     - vol-emqx-log:/opt/emqx/log
+    #volumes:
+    # - vol-emqx-data:/opt/emqx/data
+    # - vol-emqx-etc:/opt/emqx/etc
+    # - vol-emqx-log:/opt/emqx/log
 
     links:
-      - mongodb
+      - mongo
 
     extra_hosts:
-     - "localhost:172.21.112.1"
-
-    depends_on:
-     - mongodb
+     - "localhost:${IP_ENTRADA_EMQX_RESOURCE}"
 
     environment:
       EMQX_NAME: confiplant-gl
@@ -76,18 +76,24 @@ services:
       EMQX_AUTH__MONGO__DATABASE: "CP_DB"
       EMQX_AUTH__MONGO__AUTH_QUERY__COLLECTION: "emqxauthrules"
       
+
+      EMQX_AUTH__MONGO__SUPER_QUERY__COLLECTION: "emqxauthrules"
+      EMQX_AUTH__MONGO__SUPER_QUERY__SUPER_FIELD: "is_superuser"
+      EMQX_AUTH__MONGO__SUPER_QUERY__SELECTOR: "username=%u"
+      EMQX_AUTH__MONGO__SUPER_QUERY: "off"
+
       EMQX_AUTH__MONGO__AUTH_QUERY__PASSWORD_HASH: plain
       EMQX_AUTH__MONGO__AUTH_QUERY__PASSWORD_FIELD: "password"
       EMQX_AUTH__MONGO__AUTH_QUERY__SELECTOR: "username=%u"
 
-      EMQX_AUTH__MONGO__SUPER_QUERY: "off"
+      
 
       ##Enable ACL query
       EMQX_AUTH__MONGO__ACL_QUERY: "on"
       EMQX_AUTH__MONGO__ACL_QUERY__COLLECTION: "emqxauthrules"
       EMQX_AUTH__MONGO__ACL_QUERY__SELECTOR: "username=%u"
 
-      EMQX_LOADED_PLUGINS: "emqx_recon,emqx_retainer,emqx_managment,emqx_dashboard,emqx_auth_mongo"
+      EMQX_LOADED_PLUGINS: "emqx_recon,emqx_retainer,emqx_managment,emqx_auth_mongo,emqx_dashboard"
 
 
 
