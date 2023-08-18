@@ -1,8 +1,8 @@
 version: "3.8"
 
-#volumes:
-#  vol-emqx-data:            ##DATOS DE LOGUEO Y REGLAS
-#    name: foo-emqx-data
+volumes:
+  vol-emqx-data:            ##DATOS DE LOGUEO Y REGLAS
+    name: foo-emqx-data
 #  vol-emqx-etc:             ##CONFIGURACION DE EMQX -
 #    name: foo-emqx-etc
 #  vol-emqx-log:             ##ARCHIVOS DE LOG
@@ -36,14 +36,16 @@ services:
       - '8083:8083'        
       - '8085:8081'     
 
-    #volumes:
-    # - vol-emqx-data:/opt/emqx/data
+    volumes:
+     - vol-emqx-data:/opt/emqx/data
     # - vol-emqx-etc:/opt/emqx/etc
     # - vol-emqx-log:/opt/emqx/log
 
     links:
       - mongo
 
+    depends_on:
+      - mongo
     extra_hosts:
      - "localhost:${IP_ENTRADA_EMQX_RESOURCE}"
 
