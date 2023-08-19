@@ -1,15 +1,66 @@
 version: "3.8"
 
-#volumes:
-#  vol-emqx-data:            ##DATOS DE LOGUEO Y REGLAS
-#    name: foo-emqx-data
-#  vol-emqx-etc:             ##CONFIGURACION DE EMQX -
-#    name: foo-emqx-etc
-#  vol-emqx-log:             ##ARCHIVOS DE LOG
-#    name: foo-emqx-log
+volumes:
+  vol-emqx-data:            ##DATOS DE LOGUEO Y REGLAS
+    name: foo-emqx-data
+  vol-emqx-etc:             ##CONFIGURACION DE EMQX -
+    name: foo-emqx-etc
+  vol-emqx-log:             ##ARCHIVOS DE LOG
+    name: foo-emqx-log
 
 
 services:
+#FRONTEND
+  www:
+    container_name: react_fe
+    restart: always
+    build: ./fe
+    env_file:
+      - ./fe/.env
+    expose:
+      - "80"
+    environment:
+      - VIRTUAL_HOST=confiplant.cloud,www.confiplant.cloud
+      - LETSENCRYPT_HOST=confiplant.cloud,www.confiplant.cloud
+
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - /etc/nginx/certs
+      - /etc/nginx/vhost.d
+      - /usr/share/nginx/html
+    labels:
+      - com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy
+
+  letsencrypt:
+    image: nginxproxy/acme-companion
+    restart: always
+    volumes:
+      - /etc/acme.sh
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    volumes_from:
+      - nginx-proxy
+    environment:
+      - DEFAULT_EMAIL=xaveeg@gmail.com
+
+  #ENDREGION FRONTEND
+
+  backend:
+    container_name: node_be
+    restart: always
+    build: ./be
+    env_file:
+      - ./be/.env
+    ports:
+      - "3001:3001"
+    links:
+      - mongo
+      - emqx  
 
   mongo:
     container_name: mongo
@@ -24,8 +75,6 @@ services:
     ports:
       - '${MONGO_EXT_PORT}:27017'
     
-  
-  
   emqx:
     container_name: emqx
     image: emqx/emqx:4.4.18
@@ -36,10 +85,10 @@ services:
       - '8083:8083'        
       - '8085:8081'     
 
-    #volumes:
-    # - vol-emqx-data:/opt/emqx/data
-    # - vol-emqx-etc:/opt/emqx/etc
-    # - vol-emqx-log:/opt/emqx/log
+    volumes:
+     - vol-emqx-data:/opt/emqx/data
+     - vol-emqx-etc:/opt/emqx/etc
+     - vol-emqx-log:/opt/emqx/log
 
     links:
       - mongo

@@ -1,2 +1,6 @@
-mongodata/
+
 .env
+/fe
+/be
+be/
+fe/
