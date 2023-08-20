@@ -1,0 +1,34 @@
+version: "3"
+services:
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - /etc/nginx/certs
+      - /etc/nginx/vhost.d
+      - /usr/share/nginx/html
+    labels:
+      - com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy
+  www:
+    image: bdkx16/confi-gp:1.1
+    restart: always
+    expose:
+      - "80"
+    environment:
+      - VIRTUAL_HOST=confiplant.online,www.confiplant.online
+      - LETSENCRYPT_HOST=confiplant.online,www.confiplant.online
+
+  letsencrypt:
+    image: nginxproxy/acme-companion
+    restart: always
+    volumes:
+      - /etc/acme.sh
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    volumes_from:
+      - nginx-proxy
+    environment:
+      - DEFAULT_EMAIL=xaveeg@gmail.com
