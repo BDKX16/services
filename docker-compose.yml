@@ -11,46 +11,6 @@ volumes:
 
 
 services:
-#FRONTEND
-  www:
-    container_name: react_fe
-    restart: always
-    build: ./fe
-    env_file:
-      - ./fe/.env
-    expose:
-      - "80"
-    environment:
-      - VIRTUAL_HOST=confiplant.cloud,www.confiplant.cloud
-      - LETSENCRYPT_HOST=confiplant.cloud,www.confiplant.cloud
-
-  nginx-proxy:
-    image: jwilder/nginx-proxy
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-      - /etc/nginx/certs
-      - /etc/nginx/vhost.d
-      - /usr/share/nginx/html
-    labels:
-      - com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy
-
-  letsencrypt:
-    image: nginxproxy/acme-companion
-    restart: always
-    volumes:
-      - /etc/acme.sh
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    volumes_from:
-      - nginx-proxy
-    environment:
-      - DEFAULT_EMAIL=xaveeg@gmail.com
-
-  #ENDREGION FRONTEND
-
   backend:
     container_name: nodesv
     restart: always
@@ -79,20 +39,19 @@ services:
     ports:
       - '${MONGO_EXT_PORT}:27017'
     
-  
-  
   emqx:
     container_name: emqx
     image: emqx/emqx:4.4.18
     ports:
-      - '18083:18083'      ##puerto por donde entro al dashboard emqx
-      - '1883:1883'
-      - '8883:8883'
-      - '8083:8083'        
+      - '18083:18083'      ##puerto por donde entro al dashboard emqx   ssl 18083:18083 http
+      - '1883:1883' 
+      - '8883:8883'                                                   # tcp  1883:1883 tcp
+      - '8083:8083'                                                   # tcp ssl 8883:1883 tcp
       - '8085:8081'     
 
     volumes:
      - vol-emqx-data:/opt/emqx/data
+     - /certs:/opt/emqx/etc/certs
     # - vol-emqx-etc:/opt/emqx/etc
     # - vol-emqx-log:/opt/emqx/log
 
@@ -101,8 +60,7 @@ services:
 
     depends_on:
       - mongo
-    extra_hosts:
-     - "localhost:${IP_ENTRADA_EMQX_RESOURCE}"
+    
 
     environment:
       EMQX_NAME: confiplant-gl
@@ -152,6 +110,14 @@ services:
 
       EMQX_LOADED_PLUGINS: "emqx_recon,emqx_retainer,emqx_managment,emqx_auth_mongo,emqx_dashboard"
 
-
-
       EMQX_LISTENER__TCP__EXTERNAL__MAX_CONNECTIONS: 1000
+
+
+      #CERTIFICADOS
+      EMQX_LISTENER__SSL__EXTERNAL__KEYFILE: "etc/certs/emqx.key"
+      EMQX_LISTENER__SSL__EXTERNAL__CERTFILE: "etc/certs/emqx.pem"
+      EMQX_LISTENER__SSL__EXTERNAL__CACERTFILE: "etc/certs/ca.pem"
+
+      EMQX_LISTENER__WSS__EXTERNAL__KEYFILE: "etc/certs/emqx.key"
+      EMQX_LISTENER__WSS__EXTERNAL__CERTFILE: "etc/certs/emqx.pem"
+      EMQX_LISTENER__WSS__EXTERNAL__CACERTFILE: "etc/certs/ca.pem"
